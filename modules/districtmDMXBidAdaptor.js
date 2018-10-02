@@ -10,7 +10,7 @@ import { config } from 'src/config';
 const BIDDER_CODE = 'districtmDMX';
 const URL = '//ib.adnxs.com/ut/v3/prebid';
 const DMXURI = 'https://dmx.districtm.io/b/v1';
-const ANX_SEAT = 1908;
+const ANX_SEAT = '1908';
 const VIDEO_TARGETING = ['id', 'mimes', 'minduration', 'maxduration',
     'startdelay', 'skippable', 'playback_method', 'frameworks'];
 const USER_PARAMS = ['age', 'external_uid', 'segments', 'gender', 'dnt', 'language'];
@@ -44,6 +44,45 @@ export const spec = {
             returnADNXS(bidRequest, bidderRequest),
             returnDMX(bidRequest, bidderRequest)
         ]
+    },
+    interpretResponse(serverResponse, bidRequest) {
+        serverResponse = serverResponse && serverResponse.body ?  serverResponse.body : null;
+        const bids = [];
+        if ( serverResponse ) {
+            if ( serverResponse.tags ) {
+                return responseADNXS(serverResponse, bidRequest);
+            } else if ( serverResponse.seatbid) {
+                return responseDMX(serverResponse, bidRequest);
+            } else {
+                return bids;
+            }
+        } else {
+            return bids;
+        }
+
+    },
+    transformBidParams(params, isOpenRtb) {
+        params = utils.convertTypes({
+            'member': 'string',
+            'invCode': 'string',
+            'placementId': 'number',
+            'keywords': utils.transformBidderParamKeywords
+        }, params);
+
+        if (isOpenRtb) {
+            params.use_pmt_rule = (typeof params.usePaymentRule === 'boolean') ? params.usePaymentRule : false;
+            if (params.usePaymentRule) { delete params.usePaymentRule; }
+
+            Object.keys(params).forEach(paramKey => {
+                let convertedKey = utils.convertCamelToUnderscore(paramKey);
+                if (convertedKey !== paramKey) {
+                    params[convertedKey] = params[paramKey];
+                    delete params[paramKey];
+                }
+            });
+        }
+
+        return params;
     },
     getUserSyncs(optionsType) {
         if (optionsType.iframeEnabled) {
@@ -180,6 +219,8 @@ function bidToTag(bid) {
     tag.primary_size = tag.sizes[0];
     tag.ad_types = [];
     tag.uuid = bid.bidId;
+    bid.params.member = ANX_SEAT;
+    bid.params.invCode = `dm-pl-${bid.params.dmxid}`;
     if (bid.params.placementId) {
         tag.id = parseInt(bid.params.placementId, 10);
     } else {
@@ -496,6 +537,85 @@ function returnADNXS(bidRequests, bidderRequest) {
         data: payloadString,
         bidderRequest
     };
+}
+
+function responseADNXS(serverResponse,  {bidderRequest}) {
+    const bids = [];
+    serverResponse.tags.forEach(serverBid => {
+        const rtbBid = getRtbBid(serverBid);
+        if (rtbBid) {
+            if (rtbBid.cpm !== 0 && includes(this.supportedMediaTypes, rtbBid.ad_type)) {
+                const bid = newBid(serverBid, rtbBid, bidderRequest);
+                bid.mediaType = parseMediaType(rtbBid);
+                bids.push(bid);
+            }
+        }
+    });
+    return bids;
+}
+
+function responseDMX( serverResponse, bidRequest) {
+    if ( utils.isArray(serverResponse.seatbid)) {
+        const {seatbid} = serverResponse;
+        let winners = seatbid.reduce((bid, ads) => {
+            let ad = ads.bid.reduce(function(oBid, nBid) {
+                if (oBid.price < nBid.price) {
+                    const bid = matchRequest(nBid.impid, bidRequest);
+                    const {width, height} = defaultSize(bid);
+                    nBid.cpm = nBid.price;
+                    nBid.bidId = nBid.impid;
+                    nBid.requestId = nBid.impid;
+                    nBid.width = nBid.w || width;
+                    nBid.height = nBid.h || height;
+                    nBid.ad = nBid.adm;
+                    nBid.netRevenue = true;
+                    nBid.creativeId = nBid.crid;
+                    nBid.currency = 'USD';
+                    nBid.ttl = 60;
+
+                    return nBid;
+                } else {
+                    oBid.cpm = oBid.price;
+                    return oBid;
+                }
+            }, {price: 0});
+            if (ad.adm) {
+                bid.push(ad)
+            }
+            return bid;
+        }, [])
+        let winnersClean = winners.filter(w => {
+            if (w.bidId) {
+                return true;
+            }
+            return false;
+        });
+        return winnersClean;
+    }
+}
+
+export function matchRequest(id, bidRequest) {
+    const {bids} = bidRequest.bidderRequest;
+    const [returnValue] = bids.filter(bid => bid.bidId === id);
+    return returnValue;
+}
+export function checkDeepArray(Arr) {
+    if (Array.isArray(Arr)) {
+        if (Array.isArray(Arr[0])) {
+            return Arr[0];
+        } else {
+            return Arr;
+        }
+    } else {
+        return Arr;
+    }
+}
+export function defaultSize(thebidObj) {
+    const {sizes} = thebidObj;
+    const returnObject = {};
+    returnObject.width = checkDeepArray(sizes)[0];
+    returnObject.height = checkDeepArray(sizes)[1];
+    return returnObject;
 }
 
 registerBidder(spec);
