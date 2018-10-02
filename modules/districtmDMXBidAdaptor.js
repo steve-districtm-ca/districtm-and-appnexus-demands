@@ -44,6 +44,20 @@ export const spec = {
             returnADNXS(bidRequest, bidderRequest),
             returnDMX(bidRequest, bidderRequest)
         ]
+    },
+    getUserSyncs(optionsType) {
+        if (optionsType.iframeEnabled) {
+            return [
+                {
+                    type: 'iframe',
+                    url: 'https://cdn.districtm.io/ids/index.html'
+                },
+                {
+                    type: 'iframe',
+                    url: '//acdn.adnxs.com/ib/static/usersync/v3/async_usersync.html'
+                }
+            ]
+        }
     }
 
 }
