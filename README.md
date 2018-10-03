@@ -6,7 +6,7 @@ Maintainer: Steve Alliance (steve@districtm.net)
 
 # Overview
 
-The `districtmDmxAdapter` module allows publishers to include DMX Exchange demand using Prebid 1.0+.
+The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exchange demand using Prebid 1.0+.
 
 ## Attributes
 
@@ -49,19 +49,19 @@ The `districtmDmxAdapter` module allows publishers to include DMX Exchange deman
 
 # Quick Start Guide
 
-###### 1. Including the `districtmDmxAdapter` in your build process.
+###### 1. Including the `districtmDMXAppnexusMixAdapter` in your build process.
 
 Add the adapter as an argument to gulp build.
 
 ```
-gulp build --modules=districtmDmxAdapter,ixBidAdapter,appnexusBidAdapter
+gulp build --modules=districtmDMXAppnexusMixAdapter,ixBidAdapter,appnexusBidAdapter
 ```
 
-*Adding `"districtmDmxAdapter"` as an entry in a JSON file with your bidders is also acceptable.*
+*Adding `"districtmDMXAppnexusMixAdapter"` as an entry in a JSON file with your bidders is also acceptable.*
 
 ```
 [
-	"districtmDmxAdapter",
+	"districtmDMXAppnexusMixAdapter",
 	"ixBidAdapter",
 	"appnexusBidAdapter"
 ]
