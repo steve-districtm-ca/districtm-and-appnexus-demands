@@ -6,13 +6,11 @@ import find from 'core-js/library/fn/array/find';
 import includes from 'core-js/library/fn/array/includes';
 import { config } from 'src/config';
 
-
 const BIDDER_CODE = 'districtmDMX';
 const URL = '//ib.adnxs.com/ut/v3/prebid';
 const DMXURI = 'https://dmx.districtm.io/b/v1';
 const ANX_SEAT = '1908';
-const VIDEO_TARGETING = ['id', 'mimes', 'minduration', 'maxduration',
-    'startdelay', 'skippable', 'playback_method', 'frameworks'];
+const VIDEO_TARGETING = ['id', 'mimes', 'minduration', 'maxduration', 'startdelay', 'skippable', 'playback_method', 'frameworks'];
 const USER_PARAMS = ['age', 'external_uid', 'segments', 'gender', 'dnt', 'language'];
 const APP_DEVICE_PARAMS = ['geo', 'device_id']; // appid is collected separately
 const NATIVE_MAPPING = {
@@ -32,12 +30,14 @@ const NATIVE_MAPPING = {
 };
 const SOURCE = 'pbjs';
 
-
 export const spec = {
     code: BIDDER_CODE,
-    supportedFormat: ["banner"],
+    supportedMediaTypes: ['banner'],
     isBidRequestValid(bid) {
         return !!(bid.params.dmxid && bid.params.memberid);
+    },
+    test() {
+        return window.location.href.indexOf('dmTest=true') !== -1 ? 1 : 0;
     },
     buildRequests(bidRequest, bidderRequest) {
         return [
@@ -46,12 +46,12 @@ export const spec = {
         ]
     },
     interpretResponse(serverResponse, bidRequest) {
-        serverResponse = serverResponse && serverResponse.body ?  serverResponse.body : null;
+        serverResponse = serverResponse && serverResponse.body ? serverResponse.body : null;
         const bids = [];
-        if ( serverResponse ) {
-            if ( serverResponse.tags ) {
+        if (serverResponse) {
+            if (serverResponse.tags) {
                 return responseADNXS(serverResponse, bidRequest);
-            } else if ( serverResponse.seatbid) {
+            } else if (serverResponse.seatbid) {
                 return responseDMX(serverResponse, bidRequest);
             } else {
                 return bids;
@@ -59,7 +59,6 @@ export const spec = {
         } else {
             return bids;
         }
-
     },
     transformBidParams(params, isOpenRtb) {
         params = utils.convertTypes({
@@ -72,7 +71,6 @@ export const spec = {
         if (isOpenRtb) {
             params.use_pmt_rule = (typeof params.usePaymentRule === 'boolean') ? params.usePaymentRule : false;
             if (params.usePaymentRule) { delete params.usePaymentRule; }
-
             Object.keys(params).forEach(paramKey => {
                 let convertedKey = utils.convertCamelToUnderscore(paramKey);
                 if (convertedKey !== paramKey) {
@@ -418,7 +416,7 @@ function returnDMX(bidRequest, bidderRequest) {
         id: utils.generateUUID(),
         cur: ['USD'],
         tmax: (timeout - 300),
-        test: this.test() || 0,
+        test: spec.test() || 0,
         site: {
             publisher: { id: String(bidRequest[0].params.memberid) || null }
         }
@@ -539,12 +537,12 @@ function returnADNXS(bidRequests, bidderRequest) {
     };
 }
 
-function responseADNXS(serverResponse,  {bidderRequest}) {
+function responseADNXS(serverResponse, {bidderRequest}) {
     const bids = [];
     serverResponse.tags.forEach(serverBid => {
         const rtbBid = getRtbBid(serverBid);
         if (rtbBid) {
-            if (rtbBid.cpm !== 0 && includes(this.supportedMediaTypes, rtbBid.ad_type)) {
+            if (rtbBid.cpm !== 0 && includes(spec.supportedMediaTypes, rtbBid.ad_type)) {
                 const bid = newBid(serverBid, rtbBid, bidderRequest);
                 bid.mediaType = parseMediaType(rtbBid);
                 bids.push(bid);
@@ -554,8 +552,8 @@ function responseADNXS(serverResponse,  {bidderRequest}) {
     return bids;
 }
 
-function responseDMX( serverResponse, bidRequest) {
-    if ( utils.isArray(serverResponse.seatbid)) {
+function responseDMX(serverResponse, bidRequest) {
+    if (utils.isArray(serverResponse.seatbid)) {
         const {seatbid} = serverResponse;
         let winners = seatbid.reduce((bid, ads) => {
             let ad = ads.bid.reduce(function(oBid, nBid) {
