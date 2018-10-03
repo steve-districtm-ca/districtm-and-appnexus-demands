@@ -544,6 +544,7 @@ function responseADNXS(serverResponse, {bidderRequest}) {
         if (rtbBid) {
             if (rtbBid.cpm !== 0 && includes(spec.supportedMediaTypes, rtbBid.ad_type)) {
                 const bid = newBid(serverBid, rtbBid, bidderRequest);
+                bid.cpm = bid.cpm * 0.9;
                 bid.mediaType = parseMediaType(rtbBid);
                 bids.push(bid);
             }
