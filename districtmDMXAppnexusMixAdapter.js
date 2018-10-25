@@ -32,7 +32,7 @@ const SOURCE = 'pbjs';
 
 export const spec = {
     code: BIDDER_CODE,
-    supportedMediaTypes: ['banner'],
+    supportedMediaTypes: ['banner', 'video'],
     isBidRequestValid(bid) {
         return !!(bid.params.dmxid && bid.params.memberid);
     },
@@ -40,10 +40,16 @@ export const spec = {
         return window.location.href.indexOf('dmTest=true') !== -1 ? 1 : 0;
     },
     buildRequests(bidRequest, bidderRequest) {
-        return [
-            returnADNXS(bidRequest, bidderRequest),
-            returnDMX(bidRequest, bidderRequest)
-        ]
+        if (cleanMediaTypeVideo(bidRequest).length > 0) {
+            return [
+                returnADNXS(bidRequest, bidderRequest),
+                returnDMX(cleanMediaTypeVideo(bidRequest), bidderRequest)
+            ];
+        } else {
+            return [
+                returnADNXS(bidRequest, bidderRequest)
+            ]
+        }
     },
     interpretResponse(serverResponse, bidRequest) {
         serverResponse = serverResponse && serverResponse.body ? serverResponse.body : null;
@@ -70,7 +76,9 @@ export const spec = {
 
         if (isOpenRtb) {
             params.use_pmt_rule = (typeof params.usePaymentRule === 'boolean') ? params.usePaymentRule : false;
-            if (params.usePaymentRule) { delete params.usePaymentRule; }
+            if (params.usePaymentRule) {
+                delete params.usePaymentRule;
+            }
             Object.keys(params).forEach(paramKey => {
                 let convertedKey = utils.convertCamelToUnderscore(paramKey);
                 if (convertedKey !== paramKey) {
@@ -97,6 +105,19 @@ export const spec = {
         }
     }
 
+}
+
+function cleanMediaTypeVideo(bids) {
+    const nBids = bids.filter(bid => {
+        if (typeof bid.mediaTypes === 'undefined') {
+            return true;
+        }
+        if (typeof bid.mediaTypes.video === 'undefined') {
+            return true;
+        }
+        return false;
+    })
+    return nBids
 }
 
 function newRenderer(adUnitCode, rtbBid, rendererOptions = {}) {
