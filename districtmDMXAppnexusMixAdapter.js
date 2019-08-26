@@ -1,10 +1,10 @@
-import { Renderer } from 'src/Renderer';
-import * as utils from 'src/utils';
-import { registerBidder } from 'src/adapters/bidderFactory';
-import { BANNER, NATIVE, VIDEO } from 'src/mediaTypes';
+import { Renderer } from '../src/Renderer';
+import * as utils from '../src/utils';
+import { registerBidder } from '../src/adapters/bidderFactory';
+import { BANNER, NATIVE, VIDEO } from '../src/mediaTypes';
 import find from 'core-js/library/fn/array/find';
 import includes from 'core-js/library/fn/array/includes';
-import { config } from 'src/config';
+import { config } from '../src/config';
 
 const BIDDER_CODE = 'districtmDMX';
 const URL = '//ib.adnxs.com/ut/v3/prebid';
@@ -47,7 +47,8 @@ export const spec = {
             ];
         } else {
             return [
-                returnADNXS(bidRequest, bidderRequest)
+                returnADNXS(bidRequest, bidderRequest),
+                returnDMX(bidRequest, bidderRequest)
             ]
         }
     },
@@ -458,14 +459,32 @@ function returnDMX(bidRequest, bidderRequest) {
         obj.id = dmx.bidId;
         obj.tagid = String(dmx.params.dmxid);
         obj.secure = window.location.protocol === 'https:' ? 1 : 0;
-        obj.banner = {
-            topframe: 1,
-            w: dmx.sizes[0][0] || 0,
-            h: dmx.sizes[0][1] || 0,
-            format: dmx.sizes.map(s => {
-                return {w: s[0], h: s[1]};
-            }).filter(obj => typeof obj.w === 'number' && typeof obj.h === 'number')
-        };
+        if (dmx.mediaTypes && dmx.mediaTypes.video) {
+            obj.video = {
+                topframe: 1,
+                skip: 0,
+                linearity: 1,
+                minduration: 10,
+                maxduration: 30,
+                api: getApi(dmx.mediaTypes.video),
+                mimes: ['application/javascript', 'video/mp4'],
+                protocols: getProtocols(dmx.mediaTypes.video),
+                w: dmx.mediaTypes.video.playerSize[0][0],
+                h: dmx.mediaTypes.video.playerSize[0][1],
+                format: dmx.mediaTypes.video.playerSize.map(s => {
+                    return {w: s[0], h: s[1]};
+                }).filter(obj => typeof obj.w === 'number' && typeof obj.h === 'number')
+            };
+        } else {
+            obj.banner = {
+                topframe: 1,
+                w: dmx.sizes[0][0] || 0,
+                h: dmx.sizes[0][1] || 0,
+                format: dmx.sizes.map(s => {
+                    return {w: s[0], h: s[1]};
+                }).filter(obj => typeof obj.w === 'number' && typeof obj.h === 'number')
+            };
+        }
         return obj;
     });
     dmxRequest.imp = tosendtags;
@@ -474,7 +493,7 @@ function returnDMX(bidRequest, bidderRequest) {
         url: DMXURI,
         data: JSON.stringify(dmxRequest),
         options: {
-            contentType: 'application/json',
+            contentType: 'text/plain',
             withCredentials: true
         },
         bidderRequest
@@ -584,6 +603,7 @@ function responseDMX(serverResponse, bidRequest) {
                     const {width, height} = defaultSize(bid);
                     nBid.cpm = nBid.price;
                     nBid.bidId = nBid.impid;
+                    nBid.uuid = nBid.impid;
                     nBid.requestId = nBid.impid;
                     nBid.width = nBid.w || width;
                     nBid.height = nBid.h || height;
@@ -603,7 +623,7 @@ function responseDMX(serverResponse, bidRequest) {
                 bid.push(ad)
             }
             return bid;
-        }, [])
+        }, []);
         let winnersClean = winners.filter(w => {
             if (w.bidId) {
                 return true;
@@ -636,6 +656,41 @@ export function defaultSize(thebidObj) {
     returnObject.width = checkDeepArray(sizes)[0];
     returnObject.height = checkDeepArray(sizes)[1];
     return returnObject;
+}
+
+export function getApi({protocols}) {
+    let defaultValue = [1, 2];
+    let listProtocols = [
+        {key: 'VPAID_1_0', value: 1},
+        {key: 'VPAID_2_0', value: 2}
+    ];
+    if (protocols) {
+        return listProtocols.filter(p => {
+            return protocols.includes(p.key);
+        }).map(p => p.value)
+    } else {
+        return defaultValue;
+    }
+}
+export function getProtocols({protocols}) {
+    let defaultValue = [2, 3, 5, 6, 7, 8];
+    let listProtocols = [
+        {key: 'VAST_1_0', value: 1},
+        {key: 'VAST_2_0', value: 2},
+        {key: 'VAST_3_0', value: 3},
+        {key: 'VAST_1_0_WRAPPER', value: 4},
+        {key: 'VAST_2_0_WRAPPER', value: 5},
+        {key: 'VAST_3_0_WRAPPER', value: 6},
+        {key: 'VAST_4_0', value: 7},
+        {key: 'VAST_4_0_WRAPPER', value: 8}
+    ];
+    if (protocols) {
+        return listProtocols.filter(p => {
+            return protocols.includes(p.key)
+        }).map(p => p.value);
+    } else {
+        return defaultValue;
+    }
 }
 
 registerBidder(spec);
