@@ -467,7 +467,7 @@ function returnDMX(bidRequest, bidderRequest) {
                 minduration: 10,
                 maxduration: 30,
                 api: getApi(dmx.mediaTypes.video),
-                mimes: ['application/javascript', 'video/mp4'],
+                mimes: ['video/mp4'],
                 protocols: getProtocols(dmx.mediaTypes.video),
                 w: dmx.mediaTypes.video.playerSize[0][0],
                 h: dmx.mediaTypes.video.playerSize[0][1],
@@ -604,6 +604,7 @@ function responseDMX(serverResponse, bidRequest) {
                     nBid.cpm = nBid.price;
                     nBid.bidId = nBid.impid;
                     nBid.uuid = nBid.impid;
+                    nBid.videoCacheKey = bid.transactionId;
                     nBid.requestId = nBid.impid;
                     nBid.width = nBid.w || width;
                     nBid.height = nBid.h || height;
