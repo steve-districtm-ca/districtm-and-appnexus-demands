@@ -112,7 +112,105 @@ Our demand and adapter supports multiple sizes per placement, as such a single d
     }];
 ```
 
-###### 4. Implementation Checking
+###### 4. For Video implementation
+
+You can check install *lite-serve* using npm -g
+
+```bash
+npm i
+```
+Running the following command should give you access to the demo page.
+
+```bash
+npm run demo
+```
+
+You can also edit `bs-config.json` to change the port to run the server.
+
+###### Module to be added to modules.json
+
+```json
+[
+  "districtmDMXAppnexusMixAdapter",
+  "dfpAdServerVideo"
+]
+```
+
+###### Sample code you can find in the `index.html` file.
+
+```html
+  <script>
+        var pbjs = pbjs || {};
+        pbjs.que = pbjs.que || [];
+
+
+        /* Prebid video ad unit */
+
+        var videoAdUnit = {
+            code: 'video1',
+            sizes: [640,480],
+            mediaTypes: { video: {context: 'instream', //or 'outstream'
+                    playerSize: [[640, 480]]} },
+            bids: [
+                {
+                    bidder: 'districtmDMX',
+                    params: {
+                        dmxid: '347405',
+                        memberid: '100600',
+                        mimes: ["application/javascript",
+                            "video/mp4"],
+                        video: {
+                            id: 123,
+                            skipppable: true,
+                            playback_method: ['auto_play_sound_off']
+                        }
+                    }
+                },
+                {
+                    bidder: 'appnexus',
+                    params: {
+                        placementId: 1999857,
+                        video: {
+                            id: 123,
+                            skipppable: true,
+                            playback_method: ['auto_play_sound_off']
+                        }
+                    }
+                }
+            ]
+        };
+
+        pbjs.que.push(function() {
+            pbjs.addAdUnits(videoAdUnit);
+
+            pbjs.setConfig({
+                debug: true,
+                cache: {
+                    url: 'https://prebid.adnxs.com/pbc/v1/cache'
+                }
+            });
+
+            pbjs.requestBids({
+                bidsBackHandler: function(bids) {
+                    var videoUrl = pbjs.adServers.dfp.buildVideoUrl({
+                        adUnit: videoAdUnit,
+                        params: {
+                            iu: '/191956889/demo-video',
+                            cust_params: {
+                                section: 'blog',
+                                anotherKey: 'anotherValue'
+                            },
+                            output: 'vast'
+                        }
+                    });
+                    invokeVideoPlayer(videoUrl);
+                }
+            });
+        });
+
+    </script>
+```
+
+###### 5. Implementation Checking
 
 Once the bidder is live in your Prebid configuration you may confirm it is making requests to our end point by looking for requests to `https://dmx.districtm.io/b/v1`. 
-    

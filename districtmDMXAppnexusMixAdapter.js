@@ -603,12 +603,16 @@ function responseDMX(serverResponse, bidRequest) {
                     const {width, height} = defaultSize(bid);
                     nBid.cpm = nBid.price;
                     nBid.bidId = nBid.impid;
-                    nBid.uuid = nBid.impid;
-                    nBid.videoCacheKey = bid.transactionId;
                     nBid.requestId = nBid.impid;
                     nBid.width = nBid.w || width;
                     nBid.height = nBid.h || height;
                     nBid.ad = nBid.adm;
+                    nBid.mediaType = bid.mediaTypes.video ? 'video' : 'banner';
+                    if (bid.mediaTypes.video) {
+                        nBid.uuid = bid.auctionId;
+                        nBid.videoCache = bid.auctionId;
+                        nBid.vastXml = nBid.adm;
+                    }
                     nBid.netRevenue = true;
                     nBid.creativeId = nBid.crid;
                     nBid.currency = 'USD';
