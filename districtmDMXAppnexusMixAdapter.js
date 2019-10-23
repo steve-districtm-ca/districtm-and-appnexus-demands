@@ -454,6 +454,12 @@ function returnDMX(bidRequest, bidderRequest) {
         dmxRequest.user.ext = {};
         dmxRequest.user.ext.consent = bidderRequest.gdprConsent.consentString;
     }
+    try{
+        let schain = bidRequest[0].schain;
+        dmxRequest.source = {};
+        dmxRequest.source.ext = {};
+        dmxRequest.source.ext.schain = schain || {};
+    }catch(e) {}
     let tosendtags = bidRequest.map(dmx => {
         var obj = {};
         obj.id = dmx.bidId;
