@@ -13,6 +13,10 @@ The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exc
 * Single Request
 * Multi-Size Support
 * GDPR Compliant
+* Supply chain (schain)
+* CCPA Compliant
+* Prebid version 3.0 +
+* Deal Id (DMX)
 * Bids returned in **NET**
 
  ## Media Types
