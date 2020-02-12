@@ -419,6 +419,8 @@ function bidToTag(bid) {
     tag.primary_size = tag.sizes[0];
     tag.ad_types = [];
     tag.uuid = bid.bidId;
+    bid.params.member = ANX_SEAT;
+    bid.params.invCode = `dm-pl-${bid.params.dmxid}`;
     if (bid.params.placementId) {
         tag.id = parseInt(bid.params.placementId, 10);
     } else {
@@ -453,19 +455,11 @@ function bidToTag(bid) {
         tag.external_imp_id = bid.params.externalImpId;
     }
     if (!utils.isEmpty(bid.params.keywords)) {
-        let keywords = utils.transformBidderParamKeywords(bid.params.keywords);
-
-        if (keywords.length > 0) {
-            keywords.forEach(deleteValues);
-        }
-        tag.keywords = keywords;
+        tag.keywords = utils.transformBidderParamKeywords(bid.params.keywords);
     }
 
     if (bid.mediaType === NATIVE || utils.deepAccess(bid, `mediaTypes.${NATIVE}`)) {
         tag.ad_types.push(NATIVE);
-        if (tag.sizes.length === 0) {
-            tag.sizes = transformSizes([1, 1]);
-        }
 
         if (bid.nativeParams) {
             const nativeRequest = buildNativeRequest(bid.nativeParams);
@@ -493,17 +487,11 @@ function bidToTag(bid) {
             .forEach(param => tag.video[param] = bid.params.video[param]);
     }
 
-    if (bid.renderer) {
-        tag.video = Object.assign({}, tag.video, {custom_renderer_present: true});
-    }
-
-    let adUnit = find(auctionManager.getAdUnits(), au => bid.transactionId === au.transactionId);
-    if (adUnit && adUnit.mediaTypes && adUnit.mediaTypes.banner) {
+    if (
+        (utils.isEmpty(bid.mediaType) && utils.isEmpty(bid.mediaTypes)) ||
+        (bid.mediaType === BANNER || (bid.mediaTypes && bid.mediaTypes[BANNER]))
+    ) {
         tag.ad_types.push(BANNER);
-    }
-
-    if (tag.ad_types.length === 0) {
-        delete tag.ad_types;
     }
 
     return tag;
