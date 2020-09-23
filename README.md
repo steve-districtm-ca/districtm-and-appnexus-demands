@@ -6,7 +6,8 @@ Maintainer: Steve Alliance (steve@districtm.net)
 
 # Overview
 
-The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exchange demand using Prebid 1.0+.
+The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exchange demand using Prebid 4.0+.
+For previous version of prebid download this [file](https://github.com/steve-districtm-ca/districtm-and-appnexus-demands/releases/tag/1.0.0)
 
 ## Attributes
 
@@ -14,7 +15,7 @@ The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exc
 * Multi-Size Support
 * GDPR Compliant
 * CCPA Compliant
-* Support for several ID provider
+* Support ID provider
 * Floor module
 
 * Bids returned in **NET**
