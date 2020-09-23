@@ -13,11 +13,16 @@ The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exc
 * Single Request
 * Multi-Size Support
 * GDPR Compliant
+* CCPA Compliant
+* Support for several ID provider
+* Floor module
+
 * Bids returned in **NET**
 
  ## Media Types
  
 * Banner
+* Video
 
 ## Bidder Parameters
 
@@ -25,6 +30,11 @@ The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exc
 | --- | --- | --- | ---
 | dmxid | Mandatory | Integer | Unique identifier of the placement, dmxid can be obtained in the district m Boost platform.
 | memberid | Mandatory | Integer | Unique identifier for your account, memberid can be obtained in the district m Boost platform.
+| floor | Optional | float | Most placement can have floor set in our platform, but this can now be set on the request too.
+
+
+# Ad Unit Configuration Example
+
 
 # Ad Unit Configuration Example
 
