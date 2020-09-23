@@ -15,7 +15,7 @@ For previous version of prebid download this [file](https://github.com/steve-dis
 * Multi-Size Support
 * GDPR Compliant
 * CCPA Compliant
-* Support ID provider
+* Support for userId module
 * Floor module
 
 * Bids returned in **NET**
