@@ -6,18 +6,24 @@ Maintainer: Steve Alliance (steve@districtm.net)
 
 # Overview
 
-The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exchange demand using Prebid 1.0+.
+The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exchange demand using Prebid 4.0+.
+For previous version of prebid download this [file](https://github.com/steve-districtm-ca/districtm-and-appnexus-demands/releases/tag/1.0.0)
 
 ## Attributes
 
 * Single Request
 * Multi-Size Support
 * GDPR Compliant
+* CCPA Compliant
+* Support for userId module
+* Floor module
+
 * Bids returned in **NET**
 
  ## Media Types
  
 * Banner
+* Video
 
 ## Bidder Parameters
 
@@ -25,6 +31,11 @@ The `districtmDMXAppnexusMixAdapter` module allows publishers to include DMX Exc
 | --- | --- | --- | ---
 | dmxid | Mandatory | Integer | Unique identifier of the placement, dmxid can be obtained in the district m Boost platform.
 | memberid | Mandatory | Integer | Unique identifier for your account, memberid can be obtained in the district m Boost platform.
+| floor | Optional | float | Most placement can have floor set in our platform, but this can now be set on the request too.
+
+
+# Ad Unit Configuration Example
+
 
 # Ad Unit Configuration Example
 
