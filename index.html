@@ -8,11 +8,11 @@
     <title>Prebid Video -- video.js</title>
     <!-- videojs -->
     <!-- use recent version of videojs to ensure proper functioning with the iOS devices -->
-<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/video.js/6.4.0/video-js.css">-->
-<!--    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/video.js/6.4.0/video.js"></script>-->
+    <!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/video.js/6.4.0/video-js.css">-->
+    <!--    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/video.js/6.4.0/video.js"></script>-->
     <!-- videojs-vast-vpaid -->
-<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/videojs-vast-vpaid/2.0.2/videojs.vast.vpaid.min.css" rel="stylesheet">-->
-<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-vast-vpaid/2.0.2/videojs_5.vast.vpaid.min.js"></script>-->
+    <!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/videojs-vast-vpaid/2.0.2/videojs.vast.vpaid.min.css" rel="stylesheet">-->
+    <!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-vast-vpaid/2.0.2/videojs_5.vast.vpaid.min.js"></script>-->
     <script type="text/javascript" src="https://static.adplayer.pro/player/demo.js"></script>
 
     <script>
@@ -63,28 +63,28 @@
         pbjs.que.push(function() {
             pbjs.addAdUnits(videoAdUnit);
 
-                pbjs.setConfig({
-                    debug: true,
-                    cache: {
-                        url: 'https://prebid.adnxs.com/pbc/v1/cache'
-                    },
-                    userSync: {
-                        userIds: [{
-                            name: "id5Id",
-                            params: {
-                                partner: 173,
-                                pd: "vsnvlskdvnslivsnlvinsilvnsvsnvisvsivn"
-                            },
-                            storage: {
-                                type: "cookie",
-                                name: "id5id.1st",       // create a cookie with this name
-                                expires: 90,             // cookie lasts for 90 days
-                                refreshInSeconds: 8*3600 // refresh ID every 8 hours to ensure it is fresh
-                            }
-                        }],
-                        auctionDelay: 50
-                    }
-                });
+            pbjs.setConfig({
+                debug: true,
+                cache: {
+                    url: 'https://prebid.adnxs.com/pbc/v1/cache'
+                },
+                userSync: {
+                    userIds: [{
+                        name: "id5Id",
+                        params: {
+                            partner: 173,
+                            pd: "vsnvlskdvnslivsnlvinsilvnsvsnvisvsivn"
+                        },
+                        storage: {
+                            type: "cookie",
+                            name: "id5id.1st",       // create a cookie with this name
+                            expires: 90,             // cookie lasts for 90 days
+                            refreshInSeconds: 8*3600 // refresh ID every 8 hours to ensure it is fresh
+                        }
+                    }],
+                    auctionDelay: 50
+                }
+            });
             pbjs.requestBids({
                 bidsBackHandler: function(bids) {
                     console.log(bids)
