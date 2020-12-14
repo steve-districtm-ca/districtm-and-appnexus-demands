@@ -75,12 +75,13 @@ export const spec = {
     }
   },
   interpretResponse(serverResponse, bidRequest) {
-    serverResponse = serverResponse && serverResponse.body ? serverResponse.body : null;
+    console.log(553, serverResponse)
+    //serverResponse = serverResponse && serverResponse.body ? serverResponse.body : null;
     const bids = [];
     if (serverResponse) {
-      if (serverResponse.tags) {
+      if (serverResponse && serverResponse.body && serverResponse.body.tags) {
         return responseADNXS(serverResponse, bidRequest);
-      } else if (serverResponse.seatbid) {
+      } else if (serverResponse && serverResponse.body && serverResponse.body.seatbid) {
         return responseDMX(serverResponse, bidRequest);
       } else {
         return bids;
@@ -352,24 +353,24 @@ function bidToTag(bid) {
     tag.video = {};
     // place any valid video params on the tag
     Object.keys(bid.params.video)
-      .filter(param => includes(VIDEO_TARGETING, param))
-      .forEach(param => {
-        switch (param) {
-          case 'context':
-          case 'playback_method':
-            let type = bid.params.video[param];
-            type = (utils.isArray(type)) ? type[0] : type;
-            tag.video[param] = VIDEO_MAPPING[param][type];
-            break;
-          default:
-            tag.video[param] = bid.params.video[param];
-        }
-      });
+        .filter(param => includes(VIDEO_TARGETING, param))
+        .forEach(param => {
+          switch (param) {
+            case 'context':
+            case 'playback_method':
+              let type = bid.params.video[param];
+              type = (utils.isArray(type)) ? type[0] : type;
+              tag.video[param] = VIDEO_MAPPING[param][type];
+              break;
+            default:
+              tag.video[param] = bid.params.video[param];
+          }
+        });
   }
 
   if (
-    (utils.isEmpty(bid.mediaType) && utils.isEmpty(bid.mediaTypes)) ||
-    (bid.mediaType === BANNER || (bid.mediaTypes && bid.mediaTypes[BANNER]))
+      (utils.isEmpty(bid.mediaType) && utils.isEmpty(bid.mediaTypes)) ||
+      (bid.mediaType === BANNER || (bid.mediaTypes && bid.mediaTypes[BANNER]))
   ) {
     tag.ad_types.push(BANNER);
   }
@@ -383,7 +384,7 @@ function transformSizes(requestSizes) {
   let sizeObj = {};
 
   if (utils.isArray(requestSizes) && requestSizes.length === 2 &&
-    !utils.isArray(requestSizes[0])) {
+      !utils.isArray(requestSizes[0])) {
     sizeObj.width = parseInt(requestSizes[0], 10);
     sizeObj.height = parseInt(requestSizes[1], 10);
     sizes.push(sizeObj);
@@ -427,9 +428,9 @@ function hasDebug(bid) {
 
 function hasAdPod(bid) {
   return (
-    bid.mediaTypes &&
-    bid.mediaTypes.video &&
-    bid.mediaTypes.video.context === ADPOD
+      bid.mediaTypes &&
+      bid.mediaTypes.video &&
+      bid.mediaTypes.video.context === ADPOD
   );
 }
 
@@ -471,8 +472,8 @@ function getAdPodPlacementNumber(videoParams) {
   const numberOfPlacements = Math.floor(adPodDurationSec / minAllowedDuration);
 
   return requireExactDuration
-    ? Math.max(numberOfPlacements, durationRangeSec.length)
-    : numberOfPlacements;
+      ? Math.max(numberOfPlacements, durationRangeSec.length)
+      : numberOfPlacements;
 }
 
 function setVideoProperty(tag, key, value) {
@@ -491,9 +492,9 @@ function buildNativeRequest(params) {
     // check if one of the <server name> forms is used, otherwise
     // a mapping wasn't specified so pass the key straight through
     const requestKey =
-      (NATIVE_MAPPING[key] && NATIVE_MAPPING[key].serverName) ||
-      NATIVE_MAPPING[key] ||
-      key;
+        (NATIVE_MAPPING[key] && NATIVE_MAPPING[key].serverName) ||
+        NATIVE_MAPPING[key] ||
+        key;
 
     // required params are always passed on request
     const requiredParams = NATIVE_MAPPING[key] && NATIVE_MAPPING[key].requiredParams;
@@ -635,7 +636,7 @@ function returnDMX(bidRequest, bidderRequest) {
     id: utils.generateUUID(),
     cur: ['USD'],
     tmax: (timeout - 300),
-    test: 0,
+    test: spec.test() || 0,
     site: {
       publisher: { id: String(bidRequest[0].params.memberid) || null }
     }
@@ -645,7 +646,7 @@ function returnDMX(bidRequest, bidderRequest) {
     let params = config.getConfig('dmx');
     dmxRequest.user = params.user || {};
     let site = params.site || {};
-    dmxRequest.site = {...dmxRequest.site, ...site}
+    dmxRequest.site = { ...dmxRequest.site, ...site }
   } catch (e) {
 
   }
@@ -653,7 +654,7 @@ function returnDMX(bidRequest, bidderRequest) {
   let eids = [];
   if (bidRequest[0] && bidRequest[0].userId) {
     bindUserId(eids, utils.deepAccess(bidRequest[0], `userId.idl_env`), 'liveramp.com', 1);
-    bindUserId(eids, utils.deepAccess(bidRequest[0], `userId.id5id`), 'id5-sync.com', 1);
+    bindUserId(eids, utils.deepAccess(bidRequest[0], `userId.id5id.uid`), 'id5-sync.com', 1);
     bindUserId(eids, utils.deepAccess(bidRequest[0], `userId.pubcid`), 'pubcid.org', 1);
     bindUserId(eids, utils.deepAccess(bidRequest[0], `userId.tdid`), 'adserver.org', 1);
     bindUserId(eids, utils.deepAccess(bidRequest[0], `userId.criteoId`), 'criteo.com', 1);
@@ -675,9 +676,12 @@ function returnDMX(bidRequest, bidderRequest) {
     dmxRequest.regs = {};
     dmxRequest.regs.ext = {};
     dmxRequest.regs.ext.gdpr = bidderRequest.gdprConsent.gdprApplies === true ? 1 : 0;
-    dmxRequest.user = {};
-    dmxRequest.user.ext = {};
-    dmxRequest.user.ext.consent = bidderRequest.gdprConsent.consentString;
+
+    if (bidderRequest.gdprConsent.gdprApplies === true) {
+      dmxRequest.user = {};
+      dmxRequest.user.ext = {};
+      dmxRequest.user.ext.consent = bidderRequest.gdprConsent.consentString;
+    }
   }
   dmxRequest.regs = dmxRequest.regs || {};
   dmxRequest.regs.coppa = config.getConfig('coppa') === true ? 1 : 0;
@@ -691,7 +695,7 @@ function returnDMX(bidRequest, bidderRequest) {
     dmxRequest.source = {};
     dmxRequest.source.ext = {};
     dmxRequest.source.ext.schain = schain || {}
-  } catch (e) {}
+  } catch (e) { }
   let tosendtags = bidRequest.map(dmx => {
     var obj = {};
     obj.id = dmx.bidId;
@@ -701,19 +705,16 @@ function returnDMX(bidRequest, bidderRequest) {
     if (dmx.mediaTypes && dmx.mediaTypes.video) {
       obj.video = {
         topframe: 1,
-        skip: dmx.mediaTypes.video.skippable || 0,
+        skip: dmx.mediaTypes.video.skip || 0,
         linearity: dmx.mediaTypes.video.linearity || 1,
         minduration: dmx.mediaTypes.video.minduration || 5,
         maxduration: dmx.mediaTypes.video.maxduration || 60,
-        playbackmethod: getPlaybackmethod(dmx.mediaTypes.video.playback_method),
+        playbackmethod: dmx.mediaTypes.video.playbackmethod || [2],
         api: getApi(dmx.mediaTypes.video),
         mimes: dmx.mediaTypes.video.mimes || ['video/mp4'],
         protocols: getProtocols(dmx.mediaTypes.video),
-        w: dmx.mediaTypes.video.playerSize[0][0],
         h: dmx.mediaTypes.video.playerSize[0][1],
-        format: dmx.mediaTypes.video.playerSize.map(s => {
-          return {w: s[0], h: s[1]};
-        }).filter(obj => typeof obj.w === 'number' && typeof obj.h === 'number')
+        w: dmx.mediaTypes.video.playerSize[0][0]
       };
     } else {
       obj.banner = {
@@ -721,7 +722,7 @@ function returnDMX(bidRequest, bidderRequest) {
         w: cleanSizes(dmx.sizes, 'w'),
         h: cleanSizes(dmx.sizes, 'h'),
         format: cleanSizes(dmx.sizes).map(s => {
-          return {w: s[0], h: s[1]};
+          return { w: s[0], h: s[1] };
         }).filter(obj => typeof obj.w === 'number' && typeof obj.h === 'number')
       };
     }
@@ -750,11 +751,11 @@ function returnADNXS(bidRequests, bidderRequest) {
   }
   if (userObjBid) {
     Object.keys(userObjBid.params.user)
-      .filter(param => includes(USER_PARAMS, param))
-      .forEach((param) => {
-        let uparam = utils.convertCamelToUnderscore(param);
-        userObj[uparam] = userObjBid.params.user[param]
-      });
+        .filter(param => includes(USER_PARAMS, param))
+        .forEach((param) => {
+          let uparam = utils.convertCamelToUnderscore(param);
+          userObj[uparam] = userObjBid.params.user[param]
+        });
   }
 
   const appDeviceObjBid = find(bidRequests, hasAppDeviceInfo);
@@ -762,8 +763,8 @@ function returnADNXS(bidRequests, bidderRequest) {
   if (appDeviceObjBid && appDeviceObjBid.params && appDeviceObjBid.params.app) {
     appDeviceObj = {};
     Object.keys(appDeviceObjBid.params.app)
-      .filter(param => includes(APP_DEVICE_PARAMS, param))
-      .forEach(param => appDeviceObj[param] = appDeviceObjBid.params.app[param]);
+        .filter(param => includes(APP_DEVICE_PARAMS, param))
+        .forEach(param => appDeviceObj[param] = appDeviceObjBid.params.app[param]);
   }
 
   const appIdObjBid = find(bidRequests, hasAppId);
@@ -794,10 +795,10 @@ function returnADNXS(bidRequests, bidderRequest) {
 
   if (debugObj && debugObj.enabled) {
     Object.keys(debugObj)
-      .filter(param => includes(DEBUG_PARAMS, param))
-      .forEach(param => {
-        debugObjParams[param] = debugObj[param];
-      });
+        .filter(param => includes(DEBUG_PARAMS, param))
+        .forEach(param => {
+          debugObjParams[param] = debugObj[param];
+        });
   }
 
   const memberIdBid = find(bidRequests, hasMemberId);
@@ -898,6 +899,7 @@ function returnADNXS(bidRequests, bidderRequest) {
 
 function responseADNXS(serverResponse, {bidderRequest}) {
   serverResponse = serverResponse.body;
+  console.log(554,serverResponse)
   const bids = [];
   if (!serverResponse || serverResponse.error) {
     let errorMessage = `in response for ${bidderRequest.bidderCode} adapter`;
@@ -910,7 +912,7 @@ function responseADNXS(serverResponse, {bidderRequest}) {
     serverResponse.tags.forEach(serverBid => {
       const rtbBid = getRtbBid(serverBid);
       if (rtbBid) {
-        if (rtbBid.cpm !== 0 && includes(this.supportedMediaTypes, rtbBid.ad_type)) {
+        if (rtbBid.cpm !== 0 && includes(spec.supportedMediaTypes, rtbBid.ad_type)) {
           const bid = newBid(serverBid, rtbBid, bidderRequest);
           bid.mediaType = parseMediaType(rtbBid);
           bids.push(bid);
@@ -923,13 +925,13 @@ function responseADNXS(serverResponse, {bidderRequest}) {
     let debugHeader = 'AppNexus Debug Auction for Prebid\n\n'
     let debugText = debugHeader + serverResponse.debug.debug_info
     debugText = debugText
-      .replace(/(<td>|<th>)/gm, '\t') // Tables
-      .replace(/(<\/td>|<\/th>)/gm, '\n') // Tables
-      .replace(/^<br>/gm, '') // Remove leading <br>
-      .replace(/(<br>\n|<br>)/gm, '\n') // <br>
-      .replace(/<h1>(.*)<\/h1>/gm, '\n\n===== $1 =====\n\n') // Header H1
-      .replace(/<h[2-6]>(.*)<\/h[2-6]>/gm, '\n\n*** $1 ***\n\n') // Headers
-      .replace(/(<([^>]+)>)/igm, ''); // Remove any other tags
+        .replace(/(<td>|<th>)/gm, '\t') // Tables
+        .replace(/(<\/td>|<\/th>)/gm, '\n') // Tables
+        .replace(/^<br>/gm, '') // Remove leading <br>
+        .replace(/(<br>\n|<br>)/gm, '\n') // <br>
+        .replace(/<h1>(.*)<\/h1>/gm, '\n\n===== $1 =====\n\n') // Header H1
+        .replace(/<h[2-6]>(.*)<\/h[2-6]>/gm, '\n\n*** $1 ***\n\n') // Headers
+        .replace(/(<([^>]+)>)/igm, ''); // Remove any other tags
     utils.logMessage('https://console.appnexus.com/docs/understanding-the-debug-auction');
     utils.logMessage(debugText);
   }
@@ -941,20 +943,22 @@ function responseDMX(response, bidRequest) {
   response = response.body || {};
   if (response.seatbid) {
     if (utils.isArray(response.seatbid)) {
-      const {seatbid} = response;
+      const { seatbid } = response;
       let winners = seatbid.reduce((bid, ads) => {
-        let ad = ads.bid.reduce(function(oBid, nBid) {
+        let ad = ads.bid.reduce(function (oBid, nBid) {
           if (oBid.price < nBid.price) {
             const bid = matchRequest(nBid.impid, bidRequest);
-            const {width, height} = defaultSize(bid);
+            const { width, height } = defaultSize(bid);
             nBid.cpm = parseFloat(nBid.price).toFixed(2);
             nBid.bidId = nBid.impid;
             nBid.requestId = nBid.impid;
             nBid.width = nBid.w || width;
             nBid.height = nBid.h || height;
-            nBid.mediaType = bid.mediaTypes && bid.mediaTypes.video ? 'video' : null;
+            nBid.ttl = 360;
+            nBid.mediaType = bid.mediaTypes && bid.mediaTypes.video ? 'video' : 'banner';
             if (nBid.mediaType) {
-              nBid.vastXml = cleanVast(nBid.adm);
+              nBid.vastXml = cleanVast(nBid.adm, nBid.nurl);
+              nBid.ttl = 3600;
             }
             if (nBid.dealid) {
               nBid.dealId = nBid.dealid;
@@ -964,7 +968,6 @@ function responseDMX(response, bidRequest) {
             nBid.netRevenue = true;
             nBid.creativeId = nBid.crid;
             nBid.currency = 'USD';
-            nBid.ttl = 60;
             nBid.meta = nBid.meta || {};
             if (nBid.adomain && nBid.adomain.length > 0) {
               nBid.meta.advertiserDomains = nBid.adomain;
@@ -974,7 +977,7 @@ function responseDMX(response, bidRequest) {
             oBid.cpm = oBid.price;
             return oBid;
           }
-        }, {price: 0});
+        }, { price: 0 });
         if (ad.adm) {
           bid.push(ad)
         }
@@ -1081,17 +1084,26 @@ export function getProtocols({protocols}) {
   }
 }
 
-export function cleanVast(str) {
-  const toberemove = /<img\s[^>]*?src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/
-  const [img, url] = str.match(toberemove)
-  str = str.replace(toberemove, '')
-  if (img) {
-    if (url) {
-      const insrt = `<Impression><![CDATA[${url}]]></Impression>`
-      str = str.replace('</Impression>', `</Impression>${insrt}`)
+export function cleanVast(str, nurl) {
+  try {
+    const toberemove = /<img\s[^>]*?src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/
+    const [img, url] = str.match(toberemove)
+    str = str.replace(toberemove, '')
+    if (img) {
+      if (url) {
+        const insrt = `<Impression><![CDATA[${url}]]></Impression>`
+        str = str.replace('</Impression>', `</Impression>${insrt}`)
+      }
     }
+    return str;
+  } catch (e) {
+    if (!nurl) {
+      return str
+    }
+    const insrt = `<Impression><![CDATA[${nurl}]]></Impression>`
+    str = str.replace('</Impression>', `</Impression>${insrt}`)
+    return str
   }
-  return str;
 }
 
 export function getFloor (bid) {
@@ -1108,7 +1120,7 @@ export function getFloor (bid) {
       })
     });
     if (typeof floorInfo === 'object' &&
-      floorInfo.currency === 'USD' && !isNaN(parseFloat(floorInfo.floor))) {
+        floorInfo.currency === 'USD' && !isNaN(parseFloat(floorInfo.floor))) {
       floor = parseFloat(floorInfo.floor);
     }
   }
